@@ -1,0 +1,40 @@
+#!/usr/bin/python3
+import queue
+import threading
+import subprocess as sub
+import os
+import sys
+
+
+def timeout():
+	secret_folder="/home/pi/secrets/"
+	sub.Popen("sudo","chmod","a-rwx",secret_folder)
+
+def worker():
+	while True:
+		item = q.get()
+		if item is None:
+			break
+		command = "/home/pi/facialrecognition/src/unlock "+item
+		t = sub.Popen(command.split(),stdout=sub.PIPE)
+		if(t.returncode==0):
+			timer = threading.Timer(5 * 60, timeout)
+			timer.start()
+		q.task_done()
+
+q = queue.Queue()
+threads=[]
+item=sys.argv[1]
+t = threading.Thread(target=worker)
+t.start()
+threads.append(t)
+q.put(item)
+
+q.join()
+
+q.put(None)
+for t in threads:
+	t.join()
+
+if __name__ == '__main__':
+	worker()

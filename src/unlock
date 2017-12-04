@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+import face_recognition
+import face_recognition_models
+import tkinter as tk
+import subprocess as sub
+import sys
+from tkinter import messagebox
+
+def face_compare(filename):
+	recognized_face = "/home/pi/facialrecognition/data/tim"
+	known_image = face_recognition.load_image_file(recognized_face)
+	unknown_input = filename
+	unknown_image = face_recognition.load_image_file(unknown_input)
+	known_encoding=""
+	try:
+		if not len(face_recognition.face_encodings(known_image)[0])==0:
+			known_encoding = face_recognition.face_encodings(known_image)[0]
+		unknown_encoding=""
+		if not len(face_recognition.face_encodings(unknown_image)[0])==0:
+			unknown_encoding = face_recognition.face_encodings(known_image)[0]
+		results = face_recognition.compare_faces([known_encoding], unknown_encoding)[0]
+	except IndexError:
+		print("can't encode face")
+		exit(2)
+	root=tk.Tk()
+	root.withdraw()
+	secret_folder="/home/pi/secret_folder/"
+	if (results):
+		command = "sudo chmod a=rwx "+secret_folder
+		p=sub.Popen(command.split(),stdout=sub.PIPE)
+		messagebox.showwarning('User verified', secret_folder+" has been unlocked")
+		exit(0)
+	else:
+		exit(1)
+if __name__ == '__main__':
+	face_compare(sys.argv[1])
